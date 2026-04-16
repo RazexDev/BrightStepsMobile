@@ -26,18 +26,6 @@ It is designed as a powerful educational platform, delivering a smooth, responsi
 
 ---
 
-## 📱 See It In Action
-
-> ✨ Tip: Replace these placeholders with your actual `.gif` recordings to impress recruiters and lecturers.
-
-<div align="center">
-  <img src="https://via.placeholder.com/250x500.png?text=Login+Flow+Demo" width="250" alt="Login Flow Demo" />
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="https://via.placeholder.com/250x500.png?text=Dashboard+Demo" width="250" alt="Dashboard Demo" />
-</div>
-
----
-
 ## 🚀 Getting Started
 
 This project is powered by **Expo** and initialized using `create-expo-app`.
