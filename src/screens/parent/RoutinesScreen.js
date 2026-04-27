@@ -5,11 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
 import api from '../../api/axiosConfig';
 
-export default function RoutinesScreen() {
+export default function RoutinesScreen({ route, navigation }) {
   const { user } = useContext(AuthContext);
   const [routines, setRoutines] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [studentId, setStudentId] = useState(user?.studentId || '');
+  const [studentId, setStudentId] = useState(route?.params?.studentId || user?.studentId || '');
   const [showAddModal, setShowAddModal] = useState(false);
   
   // Form states
@@ -147,8 +147,8 @@ export default function RoutinesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Today&apos;s Routine</Text>
-        <Text style={styles.headerSubtitle}>Let&apos;s build a happy day step by step!</Text>
+        <Text style={styles.headerTitle}>Routine Manager ⭐</Text>
+        <Text style={styles.headerSubtitle}>Create and manage your child's daily routine</Text>
       </View>
 
       {!user?.studentId && (
@@ -170,7 +170,13 @@ export default function RoutinesScreen() {
 
       {loading && routines.length === 0 ? (
         <ActivityIndicator size="large" color="#5EAD6E" style={{ marginTop: 20 }} />
-      ) : routines.length === 0 && studentId ? (
+      ) : !studentId ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>👨‍👧</Text>
+          <Text style={styles.emptyText}>Please select a child first.</Text>
+          <Text style={styles.emptySubText}>Enter a student ID to manage their routines.</Text>
+        </View>
+      ) : routines.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🌟</Text>
           <Text style={styles.emptyText}>No routines yet!</Text>

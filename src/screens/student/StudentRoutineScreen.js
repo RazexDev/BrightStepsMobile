@@ -12,11 +12,6 @@ export default function StudentRoutineScreen({ navigation }) {
   const [error, setError] = useState(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const fadeAnim = useState(new Animated.Value(0))[0];
-  
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [taskName, setTaskName] = useState('');
-  const [category, setCategory] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
 
   // For students, their user ID is their student ID.
   const studentId = user?._id || user?.id;
@@ -81,44 +76,6 @@ export default function StudentRoutineScreen({ navigation }) {
     }
   };
 
-  const handleAddRoutine = () => {
-    if (!studentId) {
-      Alert.alert('Notice', 'Please select a child first.');
-      return;
-    }
-    setTaskName('');
-    setCategory('');
-    setShowAddModal(true);
-  };
-
-  const handleSaveRoutine = async () => {
-    if (!taskName.trim()) {
-      Alert.alert('Validation', 'Task name is required.');
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      await api.post('/routines', {
-        studentId,
-        taskName,
-        category,
-        isCompleted: false,
-      });
-      
-      setShowAddModal(false);
-      setTaskName('');
-      setCategory('');
-      fetchRoutines();
-      Alert.alert('Success', 'Routine added successfully 🌟');
-    } catch (error) {
-      console.log('Save routine error:', error.message);
-      Alert.alert('Error', 'Failed to save routine. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const renderItem = ({ item }) => (
     <TouchableOpacity 
       style={[styles.card, item.isCompleted && styles.cardCompleted]}
@@ -177,14 +134,8 @@ export default function StudentRoutineScreen({ navigation }) {
             <Text style={styles.emptyEmoji}>🌈</Text>
             <Text style={styles.emptyTitle}>No routines yet today!</Text>
             <Text style={styles.emptySubtitle}>
-              Let's add a few happy tasks and build a great day 🌟
+              Your parent can add happy tasks for your day 🌈
             </Text>
-            {user?.role?.toLowerCase() !== 'teacher' && (
-              <TouchableOpacity style={styles.addButton} onPress={handleAddRoutine}>
-                <Ionicons name="add-circle" size={24} color="#FFF" style={styles.addButtonIcon} />
-                <Text style={styles.addButtonText}>Add First Routine</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       ) : (
@@ -213,13 +164,6 @@ export default function StudentRoutineScreen({ navigation }) {
         </View>
       )}
 
-      {/* Floating Action Button */}
-      {routines.length > 0 && user?.role?.toLowerCase() !== 'teacher' && (
-        <TouchableOpacity style={styles.fab} onPress={handleAddRoutine}>
-          <Ionicons name="add" size={28} color="#FFF" />
-        </TouchableOpacity>
-      )}
-
       {/* Error Toast */}
       {error && (
         <View style={styles.errorToast}>
@@ -239,43 +183,6 @@ export default function StudentRoutineScreen({ navigation }) {
           <Text style={styles.successText}>Great job! Routine updated 🎉</Text>
         </Animated.View>
       )}
-
-      {/* Add Routine Modal */}
-      <Modal visible={showAddModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add New Routine 🌟</Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="What do we need to do? (e.g. Brush Teeth)"
-              value={taskName}
-              onChangeText={setTaskName}
-              placeholderTextColor="#9CA3AF"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Category (e.g. Morning, Evening)"
-              value={category}
-              onChangeText={setCategory}
-              placeholderTextColor="#9CA3AF"
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowAddModal(false)} disabled={isSaving}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.saveBtn, isSaving && { opacity: 0.7 }]} onPress={handleSaveRoutine} disabled={isSaving}>
-                {isSaving ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <Text style={styles.saveBtnText}>Save Task</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
