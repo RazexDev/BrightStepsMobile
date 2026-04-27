@@ -38,7 +38,10 @@ export default function StudentDashboard({ navigation }) {
             <Text style={styles.cardEmoji}>📅</Text>
             <Text style={styles.cardTitle}>My Routine</Text>
             <Text style={styles.cardDesc}>See what&apos;s happening today!</Text>
-            <TouchableOpacity style={[styles.cardBtn, { backgroundColor: '#5EAD6E' }]}>
+            <TouchableOpacity 
+              style={[styles.cardBtn, { backgroundColor: '#5EAD6E' }]}
+              onPress={() => navigation.navigate('StudentRoutine')}
+            >
               <Text style={styles.cardBtnText}>Let&apos;s Go! ❯</Text>
             </TouchableOpacity>
           </View>
