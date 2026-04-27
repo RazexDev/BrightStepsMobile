@@ -6,7 +6,7 @@ import RegisterScreen from '../screens/auth/Register';
 import FocusMatchScreen from '../screens/student/FocusMatch';
 import ShapeSortScreen from '../screens/student/ShapeSort';
 import EmotionExplorerScreen from '../screens/student/EmotionExplorer';
-import StudentRoutineScreen from '../screens/student/StudentRoutineScreen';
+import MyRoutine from '../screens/student/MyRoutine';
 
 // Import ALL screens
 import LoginScreen from '../screens/auth/Login';
@@ -42,7 +42,7 @@ export default function AppNavigator() {
             {(user.role === 'student' || user.role === 'parent') && (
               <>
                 <Stack.Screen name="Dashboard" component={StudentDashboard} />
-                <Stack.Screen name="StudentRoutine" component={StudentRoutineScreen} />
+                <Stack.Screen name="StudentRoutine" component={MyRoutine} />
                 <Stack.Screen name="StudentHub" component={GameHubScreen} />
                 <Stack.Screen name="FocusMatch" component={FocusMatchScreen} />
                 <Stack.Screen name="ShapeSort" component={ShapeSortScreen} />

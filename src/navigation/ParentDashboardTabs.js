@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
 import { getImageUrl } from '../utils/imageUtils';
 
-import RoutinesScreen from '../screens/parent/RoutinesScreen';
+import RoutineManager from '../screens/parent/RoutineManager';
 import ResourceLibraryScreen from '../screens/shared/ResourceLibraryScreen';
 import ProgressReportsScreen from '../screens/shared/ProgressReportsScreen';
 import TeacherChatScreen from '../screens/shared/TeacherChatScreen';
@@ -63,7 +63,7 @@ export default function ParentDashboardTabs() {
           tabBarStyle: { backgroundColor: '#F8FAFC', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
         }}
       >
-        <Tab.Screen name="Routines" component={RoutinesScreen} />
+        <Tab.Screen name="Routines" component={RoutineManager} />
         <Tab.Screen name="Resources" component={ResourceLibraryScreen} />
         <Tab.Screen name="Progress Reports" component={ProgressReportsScreen} />
         <Tab.Screen name="Teacher Chat" component={TeacherChatScreen} />
