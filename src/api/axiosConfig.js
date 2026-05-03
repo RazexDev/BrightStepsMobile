@@ -1,12 +1,28 @@
-import axios from 'axios';
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Replace with your actual computer's local IP address (find via 'ipconfig' on Windows or 'ifconfig' on Mac)
-// - Android emulator can use http://10.0.2.2:5001/api
-// - Physical phone must use PC IPv4 address like http://192.168.x.x:5001/api
-const BASE_URL = 'http://10.54.71.96:5001/api';
+const BASE_URL = "http://10.54.71.107:5001/api";
+
+console.log("API BASE_URL:", BASE_URL);
 
 export const api = axios.create({
   baseURL: BASE_URL,
+  timeout: 60000,
 });
+
+api.interceptors.request.use(
+  async (config) => {
+    const token = await AsyncStorage.getItem("token");
+
+    console.log("Token exists:", !!token);
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export default api;

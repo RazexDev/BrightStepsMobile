@@ -1,15 +1,23 @@
-import React, { useContext, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, Image } from 'react-native';
+import React, { useState, useContext, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput, Alert, TouchableWithoutFeedback } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../../context/AuthContext';
 import ParentDashboardTabs from '../../navigation/ParentDashboardTabs';
+import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export default function ParentDashboard() {
   const { user, logout } = useContext(AuthContext);
   const navigation = useNavigation();
-
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinInput, setPinInput] = useState('');
+  const inputRef = useRef(null);
+
+  const dots = [pinInput.length > 0, pinInput.length > 1, pinInput.length > 2, pinInput.length > 3];
+
+  const handlePinChange = (val) => {
+    if (val.length > 4) return;
+    setPinInput(val);
+  };
 
   const handlePinSubmit = () => {
     if (pinInput === '1234') {
@@ -21,40 +29,60 @@ export default function ParentDashboard() {
     }
   };
 
+  const focusInput = () => inputRef.current?.focus();
+
   if (!isUnlocked) {
     return (
-      <View style={styles.container}>
-        <Modal
-          animationType="fade"
-          transparent={false}
-          visible={!isUnlocked}
-          onRequestClose={() => navigation.goBack()}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Parent Access</Text>
-              <Text style={styles.modalSubtitle}>Enter your 4-digit PIN</Text>
+      <View style={styles.lockScreen}>
+        <Modal animationType="fade" transparent={false} visible={!isUnlocked} onRequestClose={() => navigation.goBack()}>
+          <TouchableWithoutFeedback onPress={focusInput}>
+            <View style={styles.lockBg}>
+              {/* Header */}
+              <View style={styles.lockHeader}>
+                <Text style={styles.lockEmoji}>🔐</Text>
+                <Text style={styles.lockTitle}>Parent Portal</Text>
+                <Text style={styles.lockSubtitle}>Enter your 4-digit PIN to access</Text>
+              </View>
 
+              {/* Dot indicators — tap triggers focus */}
+              <TouchableOpacity onPress={focusInput} activeOpacity={0.7} style={styles.dotsWrap}>
+                <View style={styles.dotsRow}>
+                  {dots.map((filled, i) => (
+                    <View key={i} style={[styles.dot, filled && styles.dotFilled]} />
+                  ))}
+                </View>
+                <Text style={styles.tapHint}>Tap here to type your PIN</Text>
+              </TouchableOpacity>
+
+              {/* Actual TextInput — styled visibly so it can receive focus */}
               <TextInput
+                ref={inputRef}
                 style={styles.pinInput}
                 keyboardType="number-pad"
                 maxLength={4}
                 secureTextEntry={true}
                 value={pinInput}
-                onChangeText={setPinInput}
+                onChangeText={handlePinChange}
+                onSubmitEditing={handlePinSubmit}
                 autoFocus={true}
+                returnKeyType="done"
+                caretHidden={true}
               />
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.cancelBtn}>
-                  <Text style={styles.cancelBtnText}>Go Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handlePinSubmit} style={styles.submitBtn}>
-                  <Text style={styles.submitBtnText}>Unlock</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={[styles.unlockBtn, pinInput.length < 4 && { opacity: 0.45 }]}
+                onPress={handlePinSubmit}
+                disabled={pinInput.length < 4}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.unlockBtnText}>Unlock Portal 🚀</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backLink}>
+                <Text style={styles.backLinkText}>← Go Back</Text>
+              </TouchableOpacity>
             </View>
-          </View>
+          </TouchableWithoutFeedback>
         </Modal>
       </View>
     );
@@ -64,24 +92,50 @@ export default function ParentDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FEF4CC' },
-  topRightBadge: { position: 'absolute', top: 40, right: 20, flexDirection: 'row', alignItems: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10, color: '#1E1007' },
-  subtitle: { fontSize: 16, color: '#6B4C30', marginBottom: 40 },
-  profileButton: { backgroundColor: '#3182CE', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, marginBottom: 15, width: '80%', alignItems: 'center' },
-  profileButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  button: { backgroundColor: '#E85C45', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, width: '80%', alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-
-  // Modal Styles
-  modalOverlay: { flex: 1, backgroundColor: '#FEFCF5', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '80%', backgroundColor: '#fff', borderRadius: 24, padding: 24, alignItems: 'center', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 },
-  modalTitle: { fontSize: 22, fontWeight: 'bold', color: '#1E1007', marginBottom: 8 },
-  modalSubtitle: { fontSize: 14, color: '#6B4C30', marginBottom: 20 },
-  pinInput: { width: '60%', borderBottomWidth: 3, borderBottomColor: '#3DB5A0', fontSize: 32, textAlign: 'center', letterSpacing: 10, marginBottom: 30, paddingBottom: 10, color: '#1E1007' },
-  modalButtons: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
-  cancelBtn: { flex: 1, paddingVertical: 12, marginRight: 10, borderRadius: 12, backgroundColor: '#eee', alignItems: 'center' },
-  cancelBtnText: { fontSize: 16, fontWeight: 'bold', color: '#6B4C30' },
-  submitBtn: { flex: 1, paddingVertical: 12, marginLeft: 10, borderRadius: 12, backgroundColor: '#3DB5A0', alignItems: 'center' },
-  submitBtnText: { fontSize: 16, fontWeight: 'bold', color: '#fff' }
+  lockScreen: { flex: 1, backgroundColor: COLORS.bgMain },
+  lockBg: {
+    flex: 1,
+    backgroundColor: COLORS.bgMain,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+  },
+  lockHeader: { alignItems: 'center', marginBottom: 40 },
+  lockEmoji: { fontSize: 64, marginBottom: 16 },
+  lockTitle: { fontSize: 30, fontWeight: '900', color: COLORS.textDark, letterSpacing: -0.5 },
+  lockSubtitle: { fontSize: 15, color: COLORS.textMid, marginTop: 8, fontWeight: '500', textAlign: 'center' },
+  dotsWrap: { alignItems: 'center', marginBottom: 8 },
+  dotsRow: { flexDirection: 'row', marginBottom: 6 },
+  dot: {
+    width: 20, height: 20, borderRadius: 10,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 12,
+    borderWidth: 2, borderColor: COLORS.borderMid,
+  },
+  dotFilled: { backgroundColor: COLORS.secondary, borderColor: COLORS.secondary },
+  tapHint: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600', marginBottom: 4 },
+  // Visible styled input — shows a bottom border so user knows it's active
+  pinInput: {
+    width: 180,
+    height: 52,
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 18,
+    color: COLORS.textDark,
+    textAlign: 'center',
+    borderBottomWidth: 2.5,
+    borderBottomColor: COLORS.secondary,
+    marginBottom: 36,
+    backgroundColor: 'transparent',
+  },
+  unlockBtn: {
+    backgroundColor: COLORS.secondary,
+    paddingVertical: 16, paddingHorizontal: 52,
+    borderRadius: RADIUS.lg,
+    marginBottom: 20,
+    ...SHADOWS.md, shadowColor: COLORS.secondary,
+  },
+  unlockBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
+  backLink: { paddingVertical: 12 },
+  backLinkText: { color: COLORS.textMid, fontWeight: '700', fontSize: 15 },
 });

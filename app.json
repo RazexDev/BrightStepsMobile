@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BrightStepsMobile",
-    "slug": "BrightStepsMobile",
+    "slug": "brightsteps",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,9 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow BrightStepsMobile to access your photos to upload visual support for routines.",
+        "NSCameraUsageDescription": "Allow BrightStepsMobile to use your camera to take photos for routines."
+      }
     },
     "android": {
+      "package": "com.brightsteps.mobile",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,13 +25,23 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow BrightStepsMobile to access your photos to upload visual support for routines.",
+          "cameraPermission": "Allow BrightStepsMobile to use your camera to take photos for routines."
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -38,11 +54,19 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "540649fa-aabe-4c1d-9139-b0bb820c1f3a"
+      }
+    },
+    "owner": "razexdev"
   }
 }

@@ -6,11 +6,13 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
 import { getImageUrl } from '../utils/imageUtils';
+import { COLORS, SHADOWS, RADIUS } from '../theme';
 
 import RoutineManager from '../screens/parent/RoutineManager';
 import ResourceLibraryScreen from '../screens/shared/ResourceLibraryScreen';
 import ProgressReportsScreen from '../screens/shared/ProgressReportsScreen';
-import TeacherChatScreen from '../screens/shared/TeacherChatScreen';
+
+import AnalyticsScreen from '../screens/teacher/AnalyticsScreen';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -56,33 +58,33 @@ export default function ParentDashboardTabs() {
           swipeEnabled: true,
           tabBarScrollEnabled: true,
           tabBarItemStyle: { width: 'auto', paddingHorizontal: 16 },
-          tabBarIndicatorStyle: { backgroundColor: '#10B981', height: 4, borderRadius: 2 },
-          tabBarLabelStyle: { fontSize: 14, fontWeight: '700', textTransform: 'capitalize' },
-          tabBarActiveTintColor: '#0F172A',
-          tabBarInactiveTintColor: '#94A3B8',
-          tabBarStyle: { backgroundColor: '#F8FAFC', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+          tabBarIndicatorStyle: { backgroundColor: '#5EAD6E', height: 3, borderRadius: 2 },
+          tabBarLabelStyle: { fontSize: 13, fontWeight: '700', textTransform: 'capitalize' },
+          tabBarActiveTintColor: '#1E1007',
+          tabBarInactiveTintColor: '#B8906A',
+          tabBarStyle: { backgroundColor: '#FEFCF5', elevation: 0, shadowOpacity: 0, borderBottomWidth: 1, borderBottomColor: '#F0E8D8' },
         }}
       >
         <Tab.Screen name="Routines" component={RoutineManager} />
         <Tab.Screen name="Resources" component={ResourceLibraryScreen} />
         <Tab.Screen name="Progress Reports" component={ProgressReportsScreen} />
-        <Tab.Screen name="Teacher Chat" component={TeacherChatScreen} />
+        <Tab.Screen name="Analytics" component={AnalyticsScreen} />
       </Tab.Navigator>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 15, backgroundColor: '#F8FAFC' },
+  safeArea: { flex: 1, backgroundColor: COLORS.bgMain },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 14, backgroundColor: COLORS.bgCard, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   titleContainer: { flex: 1, paddingRight: 10 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#0F172A', letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 14, color: '#64748B', marginTop: 4, fontWeight: '500' },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: COLORS.textDark, letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 13, color: COLORS.textLight, marginTop: 3, fontWeight: '600' },
   actionContainer: { flexDirection: 'row', alignItems: 'center' },
-  profilePill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', padding: 6, paddingRight: 14, borderRadius: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  badgeImage: { width: 32, height: 32, borderRadius: 16 },
-  badgeFallback: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' },
+  profilePill: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bgCard, padding: 6, paddingRight: 14, borderRadius: RADIUS.pill, borderWidth: 1.5, borderColor: COLORS.border, ...SHADOWS.sm },
+  badgeImage: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: COLORS.secondary },
+  badgeFallback: { width: 32, height: 32, borderRadius: 16, backgroundColor: COLORS.secondary, justifyContent: 'center', alignItems: 'center' },
   fallbackText: { color: '#ffffff', fontWeight: 'bold', fontSize: 14 },
-  badgeText: { fontSize: 13, fontWeight: '700', color: '#334155', marginLeft: 8, maxWidth: 70 },
-  logoutButton: { marginLeft: 12, backgroundColor: '#FEF2F2', padding: 8, borderRadius: 20, justifyContent: 'center', alignItems: 'center' }
+  badgeText: { fontSize: 13, fontWeight: '700', color: COLORS.textDark, marginLeft: 8, maxWidth: 70 },
+  logoutButton: { marginLeft: 12, backgroundColor: '#FFF1EE', padding: 8, borderRadius: 20, justifyContent: 'center', alignItems: 'center' }
 });

@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getRoutinesByStudentId, toggleTaskStatus } from '../../api/routineApi';
 import { AuthContext } from '../../context/AuthContext';
 
 // Individual task row with its own checkbox
-const TaskRow = ({ task, routineId, onTaskToggled }) => {
+const TaskRow = ({ task, routineId, onTaskToggled, taskIndex }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const [toggling, setToggling] = useState(false);
 
@@ -18,8 +18,8 @@ const TaskRow = ({ task, routineId, onTaskToggled }) => {
     ]).start();
     setToggling(true);
     try {
-      await toggleTaskStatus(routineId, task._id);
-      onTaskToggled(task._id);
+      await toggleTaskStatus(routineId, taskIndex, !task.isCompleted);
+      onTaskToggled(taskIndex);
     } catch (e) {
       Alert.alert('Oops!', 'Could not update task.');
     } finally {
@@ -35,7 +35,7 @@ const TaskRow = ({ task, routineId, onTaskToggled }) => {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[styles.taskText, task.isCompleted && styles.taskTextDone]}>
-            {task.description}
+            {task.description || task.label}
           </Text>
           {task.durationMinutes > 0 && (
             <Text style={styles.taskDuration}>⏱ {task.durationMinutes} min</Text>
@@ -49,7 +49,7 @@ const TaskRow = ({ task, routineId, onTaskToggled }) => {
 // Routine Pack card — shows tasks inline with per-pack progress
 const RoutinePackCard = ({ item, onTaskToggled }) => {
   const hasTasks = item.tasks && item.tasks.length > 0;
-  const completedCount = hasTasks ? item.tasks.filter(t => t.isCompleted).length : 0;
+  const completedCount = hasTasks ? item.tasks.filter(t => t.isCompleted || t.completed).length : 0;
   const totalCount = hasTasks ? item.tasks.length : 0;
   const packProgress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
   const isPackDone = totalCount > 0 && completedCount === totalCount;
@@ -78,16 +78,43 @@ const RoutinePackCard = ({ item, onTaskToggled }) => {
         </View>
       )}
 
+      {/* Attached resource thumbnail */}
+      <RoutineResource item={item} />
+
       {/* Task list */}
       {hasTasks ? (
         <View style={styles.tasksContainer}>
-          {item.tasks.map((task) => (
-            <TaskRow key={task._id} task={task} routineId={item._id} onTaskToggled={onTaskToggled} />
+          {item.tasks.map((task, index) => (
+            <TaskRow key={index.toString()} task={task} taskIndex={index} routineId={item._id} onTaskToggled={onTaskToggled} />
           ))}
         </View>
       ) : (
         <Text style={styles.noTasksText}>No tasks in this pack</Text>
       )}
+    </View>
+  );
+};
+
+// Inline resource viewer inside the routine card
+const RoutineResource = ({ item }) => {
+  const isImage = item.fileUrl && (item.fileType?.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(item.fileUrl));
+  const isPdf = item.fileUrl && (item.fileType === 'application/pdf' || /\.pdf(\?|$)/i.test(item.fileUrl));
+  if (!item.fileUrl) return null;
+  return (
+    <View style={{ marginBottom: 12 }}>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: '#8B6F47', marginBottom: 6 }}>📎 Visual Support</Text>
+      {isImage ? (
+        <View style={{ borderRadius: 10, overflow: 'hidden', height: 150 }}>
+          <Image source={{ uri: item.fileUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        </View>
+      ) : isPdf ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#FECACA' }}>
+          <View style={{ width: 40, height: 40, backgroundColor: '#EF4444', borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+            <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 11 }}>PDF</Text>
+          </View>
+          <Text style={{ flex: 1, color: '#991B1B', fontWeight: '600', fontSize: 13 }}>PDF Resource Attached</Text>
+        </View>
+      ) : null}
     </View>
   );
 };
@@ -117,11 +144,11 @@ export default function MyRoutine({ navigation }) {
   }, [studentId]);
 
   // Optimistically toggle a single task within a pack
-  const handleTaskToggled = (routineId, taskId) => {
+  const handleTaskToggled = (routineId, taskIndex) => {
     setRoutines(prev => prev.map(r => {
       if (r._id !== routineId) return r;
-      const updatedTasks = r.tasks.map(t =>
-        t._id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
+      const updatedTasks = r.tasks.map((t, index) =>
+        index === taskIndex ? { ...t, isCompleted: !t.isCompleted, completed: !t.completed } : t
       );
       return { ...r, tasks: updatedTasks };
     }));

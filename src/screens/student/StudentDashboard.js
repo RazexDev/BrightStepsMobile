@@ -1,10 +1,25 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthContext } from '../../context/AuthContext';
+import { api } from '../../api/axiosConfig';
 
 export default function StudentDashboard({ navigation }) {
   const { user, logout } = useContext(AuthContext);
+  const [levelInfo, setLevelInfo] = useState({ currentLevel: 0, progressPct: 0 });
+
+  useEffect(() => {
+    if (user?.name) {
+      api.get(`/resources/recommend/${encodeURIComponent(user.name)}`)
+        .then(res => {
+           setLevelInfo({
+             currentLevel: res.data.currentLevel || 0,
+             progressPct: res.data.progressPct || 0
+           });
+        })
+        .catch(err => console.log('Error fetching level:', err));
+    }
+  }, [user]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -26,7 +41,15 @@ export default function StudentDashboard({ navigation }) {
         <View style={styles.hero}>
           <Text style={styles.heroStar}>🌟</Text>
           <Text style={styles.heroTitle}>What are we <Text style={{color: '#E85C45'}}>doing</Text> today?</Text>
-          <Text style={styles.heroSubtitle}>Pick something and let&apos;s have fun! 🚀</Text>
+          <Text style={styles.heroSubtitle}>Pick something and let's have fun! 🚀</Text>
+        </View>
+
+        {/* Progress Bar Section */}
+        <View style={styles.progressContainer}>
+          <Text style={styles.levelText}>Level {levelInfo.currentLevel}</Text>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${levelInfo.progressPct}%` }]} />
+          </View>
         </View>
 
         {/* Adventure Cards */}
@@ -64,7 +87,10 @@ export default function StudentDashboard({ navigation }) {
             <Text style={styles.cardEmoji}>📚</Text>
             <Text style={styles.cardTitle}>Resources</Text>
             <Text style={styles.cardDesc}>Explore learning materials!</Text>
-            <TouchableOpacity style={[styles.cardBtn, { backgroundColor: '#44A7CE' }]}>
+            <TouchableOpacity 
+              style={[styles.cardBtn, { backgroundColor: '#44A7CE' }]}
+              onPress={() => navigation.navigate('StudentResources')}
+            >
               <Text style={styles.cardBtnText}>Explore! ❯</Text>
             </TouchableOpacity>
           </View>
@@ -101,5 +127,9 @@ const styles = StyleSheet.create({
   cardBtn: { alignSelf: 'flex-start', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
   cardBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   logoutBtn: { marginTop: 40, alignSelf: 'center' },
-  logoutText: { color: '#E85C45', fontWeight: 'bold', fontSize: 16 }
+  logoutText: { color: '#E85C45', fontWeight: 'bold', fontSize: 16 },
+  progressContainer: { backgroundColor: '#fff', padding: 15, borderRadius: 16, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  levelText: { fontSize: 18, fontWeight: 'bold', color: '#1E1007', marginBottom: 8 },
+  progressBarBg: { height: 12, backgroundColor: '#E5E7EB', borderRadius: 6, overflow: 'hidden' },
+  progressBarFill: { height: '100%', backgroundColor: '#5EAD6E', borderRadius: 6 }
 });

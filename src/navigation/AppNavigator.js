@@ -17,6 +17,7 @@ import GameHubScreen from '../screens/student/GameHub';
 import StudentDashboard from '../screens/student/StudentDashboard';
 import ProfileSettingsScreen from '../screens/parent/ProfileSettingsScreen';
 import TeacherDashboardTabs from './TeacherDashboardTabs';
+import ResourceLibraryScreen from '../screens/shared/ResourceLibraryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -48,6 +49,7 @@ export default function AppNavigator() {
                 <Stack.Screen name="ShapeSort" component={ShapeSortScreen} />
                 <Stack.Screen name="EmotionExplorer" component={EmotionExplorerScreen} />
                 <Stack.Screen name="ParentHub" component={ParentDashboard} />
+                <Stack.Screen name="StudentResources" component={ResourceLibraryScreen} />
               </>
             )}
 

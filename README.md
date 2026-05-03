@@ -40,7 +40,15 @@ npm install
 
 ---
 
-### 2️⃣ Start the App
+### 2️⃣ Update API Configuration
+
+Before running the app, make sure to point it to your backend server.
+1. Open `src/api/axiosConfig.js`
+2. Update the `BASE_URL` to your backend's IP address (e.g. `http://YOUR_LOCAL_IP:5001/api`) for local testing, or your production URL (e.g. `https://your-production-url.app/api`).
+
+---
+
+### 3️⃣ Start the App
 
 ```bash
 npx expo start
@@ -79,6 +87,26 @@ This will:
 
 * Move starter code → `app-example/`
 * Create a clean `app/` directory
+
+---
+
+## 🛠️ Building an APK (Android)
+
+To build a standalone `.apk` file for Android, we use **EAS Build** (Expo Application Services).
+
+1. Install EAS CLI:
+   ```bash
+   npm install -g eas-cli
+   ```
+2. Log in to your Expo account:
+   ```bash
+   eas login
+   ```
+3. Run the build command:
+   ```bash
+   eas build --platform android --profile preview
+   ```
+4. Once the build finishes, download the `.apk` from the provided link and install it on your device.
 
 ---
 

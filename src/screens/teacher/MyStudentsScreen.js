@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Activity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../../api/axiosConfig';
+import { COLORS, SHADOWS, RADIUS } from '../../theme';
 
 export default function MyStudentsScreen() {
   const [studentId, setStudentId] = useState('');
@@ -15,7 +16,6 @@ export default function MyStudentsScreen() {
       Alert.alert('Notice', 'Please enter a student ID first.');
       return;
     }
-
     setLoading(true);
     setHasSearched(true);
     try {
@@ -33,20 +33,24 @@ export default function MyStudentsScreen() {
 
   const completedCount = routines.filter(r => r.isCompleted).length;
   const totalCount = routines.length;
-  const completionPercentage = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+  const completionPct = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <View style={[styles.statusIndicator, item.isCompleted ? styles.statusCompleted : styles.statusPending]} />
+      <View style={[styles.statusDot, item.isCompleted ? styles.dotDone : styles.dotPending]} />
       <View style={styles.cardInfo}>
-        <Text style={[styles.cardTitle, item.isCompleted && styles.cardTitleCompleted]}>
-          {item.taskName}
+        <Text style={[styles.cardTitle, item.isCompleted && styles.cardTitleDone]}>
+          {item.taskName || item.title}
         </Text>
-        {item.category ? <Text style={styles.cardCategory}>{item.category}</Text> : null}
+        {item.category ? (
+          <View style={styles.categoryPill}>
+            <Text style={styles.categoryText}>{item.category}</Text>
+          </View>
+        ) : null}
       </View>
-      <View style={styles.statusBadge}>
-        <Text style={[styles.statusText, item.isCompleted ? styles.statusTextCompleted : styles.statusTextPending]}>
-          {item.isCompleted ? 'Completed' : 'Pending'}
+      <View style={[styles.statusBadge, item.isCompleted ? styles.badgeDone : styles.badgePending]}>
+        <Text style={[styles.badgeText, item.isCompleted ? styles.badgeTextDone : styles.badgeTextPending]}>
+          {item.isCompleted ? '✓ Done' : 'Pending'}
         </Text>
       </View>
     </View>
@@ -54,52 +58,79 @@ export default function MyStudentsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Routine Observation</Text>
-        <Text style={styles.headerSubtitle}>This view helps teachers observe routine patterns for reports.</Text>
+      {/* Intro Banner */}
+      <View style={styles.banner}>
+        <Text style={styles.bannerEmoji}>🔭</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.bannerTitle}>Routine Observation</Text>
+          <Text style={styles.bannerSub}>Search a student ID to view their routines and progress.</Text>
+        </View>
       </View>
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Enter Student ID"
-          value={studentId}
-          onChangeText={setStudentId}
-        />
-        <TouchableOpacity style={styles.searchBtn} onPress={fetchStudentRoutines}>
+      {/* Search */}
+      <View style={styles.searchRow}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={18} color={COLORS.textLight} style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Enter Student ID…"
+            placeholderTextColor={COLORS.textMuted}
+            value={studentId}
+            onChangeText={setStudentId}
+            onSubmitEditing={fetchStudentRoutines}
+            returnKeyType="search"
+          />
+        </View>
+        <TouchableOpacity style={styles.searchBtn} onPress={fetchStudentRoutines} activeOpacity={0.85}>
           <Text style={styles.searchBtnText}>Load</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Summary Cards */}
       {hasSearched && !loading && (
-        <View style={styles.summaryContainer}>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>Total</Text>
-            <Text style={styles.summaryValue}>{totalCount}</Text>
-          </View>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>Completed</Text>
-            <Text style={[styles.summaryValue, { color: '#5EAD6E' }]}>{completedCount}</Text>
-          </View>
-          <View style={styles.summaryBox}>
-            <Text style={styles.summaryLabel}>Rate</Text>
-            <Text style={styles.summaryValue}>{completionPercentage}%</Text>
-          </View>
+        <View style={styles.summaryRow}>
+          {[
+            { label: 'Total', value: totalCount, color: COLORS.textDark },
+            { label: 'Completed', value: completedCount, color: COLORS.secondary },
+            { label: 'Rate', value: `${completionPct}%`, color: COLORS.accent },
+          ].map((s) => (
+            <View key={s.label} style={styles.summaryCard}>
+              <Text style={[styles.summaryValue, { color: s.color }]}>{s.value}</Text>
+              <Text style={styles.summaryLabel}>{s.label}</Text>
+            </View>
+          ))}
         </View>
       )}
 
+      {/* Progress bar */}
+      {hasSearched && !loading && totalCount > 0 && (
+        <View style={styles.progressWrap}>
+          <View style={styles.progressBg}>
+            <View style={[styles.progressFill, { width: `${completionPct}%` }]} />
+          </View>
+          <Text style={styles.progressLabel}>{completionPct}% completed</Text>
+        </View>
+      )}
+
+      {/* List */}
       {loading ? (
-        <ActivityIndicator size="large" color="#3182CE" style={{ marginTop: 30 }} />
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={COLORS.secondary} />
+          <Text style={styles.loadingText}>Fetching routines…</Text>
+        </View>
       ) : hasSearched && routines.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No routines found for this student.</Text>
+        <View style={styles.center}>
+          <Text style={styles.emptyEmoji}>📋</Text>
+          <Text style={styles.emptyTitle}>No routines found</Text>
+          <Text style={styles.emptySub}>This student has no routines yet.</Text>
         </View>
       ) : (
         <FlatList
           data={routines}
           keyExtractor={(item) => item._id}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </SafeAreaView>
@@ -107,31 +138,66 @@ export default function MyStudentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { padding: 20, paddingBottom: 10 },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#0F172A' },
-  headerSubtitle: { fontSize: 14, color: '#64748B', marginTop: 6 },
-  searchContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 20 },
-  searchInput: { flex: 1, backgroundColor: '#FFF', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#E2E8F0', fontSize: 16 },
-  searchBtn: { backgroundColor: '#3182CE', paddingHorizontal: 20, justifyContent: 'center', borderRadius: 8, marginLeft: 10 },
-  searchBtnText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
-  summaryContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 15 },
-  summaryBox: { flex: 1, backgroundColor: '#FFF', marginHorizontal: 4, padding: 15, borderRadius: 12, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2 },
-  summaryLabel: { fontSize: 12, color: '#64748B', fontWeight: 'bold', textTransform: 'uppercase' },
-  summaryValue: { fontSize: 22, fontWeight: '900', color: '#0F172A', marginTop: 5 },
-  listContainer: { padding: 20, paddingBottom: 40 },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-  statusIndicator: { width: 12, height: 12, borderRadius: 6, marginRight: 15 },
-  statusCompleted: { backgroundColor: '#5EAD6E' },
-  statusPending: { backgroundColor: '#F59E0B' },
+  container: { flex: 1, backgroundColor: COLORS.bgMain },
+  banner: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: 20, marginTop: 16, marginBottom: 16,
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
+    padding: 16, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+  },
+  bannerEmoji: { fontSize: 32, marginRight: 14 },
+  bannerTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textDark },
+  bannerSub: { fontSize: 13, color: COLORS.textMid, marginTop: 3 },
+  searchRow: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 16 },
+  searchBox: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.md,
+    borderWidth: 1.5, borderColor: COLORS.border,
+    paddingHorizontal: 14, height: 48, ...SHADOWS.sm,
+  },
+  searchInput: { flex: 1, fontSize: 15, color: COLORS.textDark },
+  searchBtn: {
+    backgroundColor: COLORS.secondary, paddingHorizontal: 20,
+    justifyContent: 'center', borderRadius: RADIUS.md, marginLeft: 10,
+    height: 48, ...SHADOWS.sm, shadowColor: COLORS.secondary,
+  },
+  searchBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 14 },
+  summaryCard: {
+    flex: 1, marginHorizontal: 4,
+    backgroundColor: COLORS.bgCard, padding: 14, borderRadius: RADIUS.md,
+    alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+  },
+  summaryValue: { fontSize: 24, fontWeight: '900' },
+  summaryLabel: { fontSize: 12, color: COLORS.textLight, fontWeight: '700', marginTop: 4, textTransform: 'uppercase' },
+  progressWrap: { paddingHorizontal: 20, marginBottom: 14 },
+  progressBg: { height: 8, backgroundColor: COLORS.border, borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: COLORS.secondary, borderRadius: 4 },
+  progressLabel: { fontSize: 12, color: COLORS.textLight, fontWeight: '700', marginTop: 6, textAlign: 'right' },
+  list: { paddingHorizontal: 20, paddingBottom: 40 },
+  card: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.bgCard, padding: 16,
+    borderRadius: RADIUS.md, marginBottom: 10,
+    borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+  },
+  statusDot: { width: 12, height: 12, borderRadius: 6, marginRight: 14 },
+  dotDone: { backgroundColor: COLORS.secondary },
+  dotPending: { backgroundColor: COLORS.warning },
   cardInfo: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1E293B' },
-  cardTitleCompleted: { color: '#94A3B8' },
-  cardCategory: { fontSize: 13, color: '#64748B', marginTop: 4 },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: '#F1F5F9' },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
-  statusTextCompleted: { color: '#5EAD6E' },
-  statusTextPending: { color: '#F59E0B' },
-  emptyState: { alignItems: 'center', marginTop: 40 },
-  emptyText: { color: '#64748B', fontSize: 16 }
+  cardTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textDark },
+  cardTitleDone: { color: COLORS.textMuted, textDecorationLine: 'line-through' },
+  categoryPill: { marginTop: 5, alignSelf: 'flex-start', backgroundColor: COLORS.bgMuted, paddingHorizontal: 10, paddingVertical: 3, borderRadius: RADIUS.pill },
+  categoryText: { fontSize: 11, fontWeight: '700', color: COLORS.gold },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.pill },
+  badgeDone: { backgroundColor: '#D1FAE5' },
+  badgePending: { backgroundColor: '#FEF3C7' },
+  badgeText: { fontSize: 12, fontWeight: '700' },
+  badgeTextDone: { color: COLORS.secondary },
+  badgeTextPending: { color: COLORS.warning },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
+  loadingText: { marginTop: 12, color: COLORS.textMid, fontSize: 15, fontWeight: '500' },
+  emptyEmoji: { fontSize: 48, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textDark, marginBottom: 6 },
+  emptySub: { fontSize: 14, color: COLORS.textMid, textAlign: 'center' },
 });
