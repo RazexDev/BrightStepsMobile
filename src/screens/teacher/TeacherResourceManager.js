@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  SafeAreaView, View, Text, FlatList, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert, Image
+  View, Text, FlatList, ActivityIndicator, StyleSheet, TextInput, TouchableOpacity, ScrollView, Modal, Alert, Image
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as DocumentPicker from 'expo-document-picker';
 import { Video } from 'expo-av';
 import * as WebBrowser from 'expo-web-browser';

@@ -30,7 +30,7 @@ const chartConfig = {
 export default function AnalyticsScreen() {
   const { user } = React.useContext(AuthContext);
   const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
-  const childName = user?.studentName || 'Yuhi'; // fallback
+  const childName = user?.studentName || user?.name || 'Student';
 
   const [allReports, setAllReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -112,13 +112,16 @@ export default function AnalyticsScreen() {
     const eDate = reportType === 'All' ? null : endDate;
     let reports = allReports;
     if (!isTeacher) {
-      reports = reports.filter(r => r.studentName === childName || r.studentName?.includes(childName));
-      // fallbacks for UI demo if no data
-      if (reports.length === 0) reports = allReports.slice(0, 5);
-      return filterReportsByDateAndStudent(reports, sDate, eDate, ''); // No student search for parent
+      const userId = user?._id || user?.id;
+      reports = reports.filter(r => 
+        r.studentName === childName || 
+        r.studentName?.includes(childName) ||
+        (userId && (r.studentId === userId || r.childId === userId))
+      );
+      return filterReportsByDateAndStudent(reports, sDate, eDate, '');
     }
     return filterReportsByDateAndStudent(reports, sDate, eDate, studentSearch);
-  }, [allReports, reportType, startDate, endDate, studentSearch, isTeacher, childName]);
+  }, [allReports, reportType, startDate, endDate, studentSearch, isTeacher, childName, user]);
 
   const summary = useMemo(() => calculateSummaryCards(filteredReports), [filteredReports]);
   const dailyTrend = useMemo(() => calculateDailyTrend(filteredReports), [filteredReports]);

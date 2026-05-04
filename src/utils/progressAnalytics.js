@@ -88,7 +88,7 @@ export const filterReportsByDateAndStudent = (reports, startDate, endDate, stude
     return inDateRange && matchesStudent;
   });
 
-  return filtered.length > 0 ? filtered : normalizedReports; // Fallback to all if filtered is empty for UI gracefully
+  return filtered;
 };
 
 export const calculateSummaryCards = (reports) => {

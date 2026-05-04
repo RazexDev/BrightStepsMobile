@@ -58,7 +58,7 @@ export default function RoutinesScreen({ route }) {
   const [editingId, setEditingId] = useState(null);
   const [taskName, setTaskName] = useState("");
   const [category, setCategory] = useState("");
-  const [taskDesc, setTaskDesc] = useState("");
+  const [tasks, setTasks] = useState([{ label: "", id: Date.now() }]);
 
   const descRef = useRef(null);
 
@@ -84,7 +84,7 @@ export default function RoutinesScreen({ route }) {
     setEditingId(null);
     setTaskName("");
     setCategory("");
-    setTaskDesc("");
+    setTasks([{ label: "", id: Date.now() }]);
     setSelectedFile(null);
     setCloudUrl(null);
   };
@@ -183,9 +183,14 @@ export default function RoutinesScreen({ route }) {
       return;
     }
 
-    const tasks = taskDesc.trim()
-      ? [{ label: taskDesc.trim(), description: taskDesc.trim(), mins: 0, completed: false }]
-      : [];
+    const validTasks = tasks
+      .filter(t => t.label.trim())
+      .map(t => ({ label: t.label.trim(), description: t.label.trim(), mins: 0, completed: false }));
+
+    if (validTasks.length === 0) {
+      Alert.alert("Validation", "Please add at least one task to the routine.");
+      return;
+    }
 
     setLoading(true);
 
@@ -196,7 +201,7 @@ export default function RoutinesScreen({ route }) {
         taskName: taskName.trim(),
         category: category.trim(),
         isCompleted: false,
-        tasks,
+        tasks: validTasks,
         ...(cloudUrl && { fileUrl: cloudUrl }),
         ...(selectedFile?.name && { fileName: selectedFile.name }),
         ...(selectedFile?.mimeType && { fileType: selectedFile.mimeType }),
@@ -236,7 +241,11 @@ export default function RoutinesScreen({ route }) {
     setEditingId(item._id);
     setTaskName(item.taskName || item.title || "");
     setCategory(item.category || "");
-    setTaskDesc(item.tasks?.[0]?.label || item.tasks?.[0]?.description || "");
+    if (item.tasks && item.tasks.length > 0) {
+      setTasks(item.tasks.map((t, idx) => ({ label: t.label || t.description || "", id: Date.now() + idx })));
+    } else {
+      setTasks([{ label: "", id: Date.now() }]);
+    }
     setSelectedFile(null);
     setCloudUrl(item.fileUrl || null);
     setShowModal(true);
@@ -260,9 +269,9 @@ export default function RoutinesScreen({ route }) {
             <Text style={[s.cardCat, { color: m.color }]}>{item.category}</Text>
           ) : null}
 
-          {item.tasks?.[0]?.label ? (
+          {item.tasks && item.tasks.length > 0 ? (
             <Text style={s.cardDesc} numberOfLines={1}>
-              {item.tasks[0].label}
+              {item.tasks.length} {item.tasks.length === 1 ? 'task' : 'tasks'}
             </Text>
           ) : null}
 
@@ -409,20 +418,36 @@ export default function RoutinesScreen({ route }) {
                 })}
               </View>
 
-              <Text style={s.lbl}>Task Description</Text>
-              <TextInput
-                ref={descRef}
-                style={s.area}
-                placeholder={"e.g. Brush teeth for 2 minutes\nwith circular motions"}
-                placeholderTextColor="#9CA3AF"
-                value={taskDesc}
-                onChangeText={setTaskDesc}
-                multiline
-                textAlignVertical="top"
-                blurOnSubmit={false}
-                returnKeyType="default"
-                scrollEnabled={false}
-              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 10 }}>
+                <Text style={[s.lbl, { marginBottom: 0 }]}>Tasks <Text style={s.req}>*</Text></Text>
+                <TouchableOpacity onPress={() => setTasks([...tasks, { label: '', id: Date.now() }])}>
+                  <Text style={{ color: '#38b2ac', fontWeight: 'bold', fontSize: 13 }}>+ Add Task</Text>
+                </TouchableOpacity>
+              </View>
+
+              {tasks.map((task, index) => (
+                <View key={task.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <TextInput
+                    style={[s.inp, { flex: 1, marginBottom: 0 }]}
+                    placeholder={`Task ${index + 1} (e.g. Brush teeth)`}
+                    placeholderTextColor="#9CA3AF"
+                    value={task.label}
+                    onChangeText={(text) => {
+                      const newTasks = [...tasks];
+                      newTasks[index].label = text;
+                      setTasks(newTasks);
+                    }}
+                  />
+                  {tasks.length > 1 && (
+                    <TouchableOpacity 
+                      onPress={() => setTasks(tasks.filter((_, i) => i !== index))}
+                      style={{ padding: 10, marginLeft: 5 }}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
 
               <Text style={s.lbl}>
                 Visual Support <Text style={s.opt}>(Optional)</Text>

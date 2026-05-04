@@ -14,11 +14,15 @@ import {
   Image,
   Modal,
   Dimensions,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   createRoutine,
+  updateRoutine,
   deleteRoutine,
   getRoutinesByStudentId,
 } from "../../api/routineApi";
@@ -34,11 +38,12 @@ export default function RoutineManager({ route }) {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const [searchText, setSearchText] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [taskText, setTaskText] = useState("");
+  const [tasks, setTasks] = useState([{ label: "", id: Date.now() }]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
 
@@ -216,14 +221,35 @@ export default function RoutineManager({ route }) {
   const resetForm = () => {
     setTitle("");
     setCategory("");
-    setTaskText("");
+    setTasks([{ label: "", id: Date.now() }]);
     setSelectedFile(null);
     setFilePreview(null);
+    setEditingId(null);
   };
 
-  const handleCreateRoutine = async () => {
-    if (!studentId) {
-      Alert.alert("Missing Child", "Please select a child before creating routines.");
+  const handleEdit = (item) => {
+    setEditingId(item._id);
+    setTitle(item.title || item.taskName || "");
+    setCategory(item.category || "");
+    
+    if (item.tasks && item.tasks.length > 0) {
+      setTasks(item.tasks.map((t, idx) => ({ label: t.label || t.description || "", id: Date.now() + idx })));
+    } else if (item.taskName) {
+      setTasks([{ label: item.taskName, id: Date.now() }]);
+    } else {
+      setTasks([{ label: "", id: Date.now() }]);
+    }
+
+    setSelectedFile(null);
+    setFilePreview(item.fileUrl || null);
+    setShowForm(true);
+  };
+
+  const handleSaveRoutine = async () => {
+    const finalStudentId = studentId || (isParentViewingOwn ? user._id : "");
+
+    if (!finalStudentId) {
+      Alert.alert("Missing Child", "Please select a child before saving routines.");
       return;
     }
 
@@ -237,16 +263,19 @@ export default function RoutineManager({ route }) {
       return;
     }
 
-    const tasks = taskText.trim()
-      ? [
-          {
-            label: taskText.trim(),
-            description: taskText.trim(),
-            mins: 0,
-            completed: false,
-          },
-        ]
-      : [];
+    const validTasks = tasks
+      .filter(t => t.label.trim())
+      .map(t => ({
+        label: t.label.trim(),
+        description: t.label.trim(),
+        mins: 0,
+        completed: false,
+      }));
+
+    if (validTasks.length === 0) {
+      Alert.alert("Validation", "Please add at least one task to the routine.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -255,9 +284,9 @@ export default function RoutineManager({ route }) {
         formData.append("title", title.trim());
         formData.append("taskName", title.trim());
         formData.append("category", category);
-        formData.append("studentId", studentId);
+        formData.append("studentId", finalStudentId);
         formData.append("isCompleted", "false");
-        formData.append("tasks", JSON.stringify(tasks));
+        formData.append("tasks", JSON.stringify(validTasks));
         
         setUploadingFile(true);
         formData.append("file", {
@@ -265,25 +294,33 @@ export default function RoutineManager({ route }) {
           name: selectedFile.name,
           type: selectedFile.mimeType || "application/octet-stream",
         });
-        await createRoutine(formData, true);
+        if (editingId) {
+          await updateRoutine(editingId, formData, true);
+        } else {
+          await createRoutine(formData, true);
+        }
       } else {
         const payload = {
           title: title.trim(),
           taskName: title.trim(),
           category,
-          studentId,
+          studentId: finalStudentId,
           isCompleted: false,
-          tasks
+          tasks: validTasks
         };
-        await createRoutine(payload, false);
+        if (editingId) {
+          await updateRoutine(editingId, payload, false);
+        } else {
+          await createRoutine(payload, false);
+        }
       }
 
-      Alert.alert("Success! 🌟", "Routine created successfully. Your child will love the visual support!");
+      Alert.alert("Success! 🌟", editingId ? "Routine updated successfully!" : "Routine created successfully. Your child will love the visual support!");
       resetForm();
       setShowForm(false);
       fetchRoutines();
     } catch (error) {
-      console.log("=== CREATE ROUTINE ERROR ===", error);
+      console.log("=== SAVE ROUTINE ERROR ===", error);
       const errMsg = "Full Error: " + (error?.response?.data?.message || error.message || JSON.stringify(error));
       Alert.alert("Error Debug", errMsg);
     } finally {
@@ -359,12 +396,20 @@ export default function RoutineManager({ route }) {
           )}
         </View>
 
-        <TouchableOpacity 
-          style={styles.deleteBtn} 
-          onPress={() => handleDelete(item._id, item.title || item.taskName)}
-        >
-          <Ionicons name="trash-outline" size={20} color="#EF4444" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8, marginLeft: 8 }}>
+          <TouchableOpacity 
+            style={[styles.deleteBtn, { backgroundColor: '#E0F2FE' }]} 
+            onPress={() => handleEdit(item)}
+          >
+            <Ionicons name="pencil-outline" size={20} color="#0284C7" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.deleteBtn} 
+            onPress={() => handleDelete(item._id, item.title || item.taskName)}
+          >
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -453,7 +498,7 @@ export default function RoutineManager({ route }) {
           <View style={styles.modalContent}>
             {/* Modal Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Create Routine Pack</Text>
+              <Text style={styles.modalTitle}>{editingId ? "Edit Routine Pack" : "Create Routine Pack"}</Text>
               <TouchableOpacity
                 onPress={() => {
                   setShowForm(false);
@@ -465,7 +510,8 @@ export default function RoutineManager({ route }) {
             </View>
 
             {/* Form Content */}
-            <View style={styles.formContent}>
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flexShrink: 1 }}>
+              <ScrollView contentContainerStyle={styles.formContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {/* Title Input */}
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Routine Title *</Text>
@@ -509,18 +555,38 @@ export default function RoutineManager({ route }) {
                 </View>
               </View>
 
-              {/* Task Input */}
+              {/* Task Input List */}
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Task Description</Text>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  value={taskText}
-                  onChangeText={setTaskText}
-                  placeholder="e.g., Brush teeth for 2 minutes with circular motions"
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  numberOfLines={3}
-                />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Text style={[styles.inputLabel, { marginBottom: 0 }]}>Tasks *</Text>
+                  <TouchableOpacity onPress={() => setTasks([...tasks, { label: '', id: Date.now() }])}>
+                    <Text style={{ color: '#38b2ac', fontWeight: 'bold', fontSize: 13 }}>+ Add Task</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {tasks.map((task, index) => (
+                  <View key={task.id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <TextInput
+                      style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                      value={task.label}
+                      onChangeText={(text) => {
+                        const newTasks = [...tasks];
+                        newTasks[index].label = text;
+                        setTasks(newTasks);
+                      }}
+                      placeholder={`Task ${index + 1} (e.g. Brush teeth)`}
+                      placeholderTextColor="#9CA3AF"
+                    />
+                    {tasks.length > 1 && (
+                      <TouchableOpacity 
+                        onPress={() => setTasks(tasks.filter((_, i) => i !== index))}
+                        style={{ padding: 10, marginLeft: 5 }}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))}
               </View>
 
               {/* File Upload Section */}
@@ -581,7 +647,7 @@ export default function RoutineManager({ route }) {
 
                 <TouchableOpacity
                   style={[styles.saveBtn, (loading || !title.trim() || !category) && styles.saveBtnDisabled]}
-                  onPress={handleCreateRoutine}
+                  onPress={handleSaveRoutine}
                   disabled={loading || !title.trim() || !category}
                 >
                   {loading ? (
@@ -590,13 +656,13 @@ export default function RoutineManager({ route }) {
                     <>
                       <Ionicons name="checkmark-circle" size={20} color="#fff" />
                       <Text style={styles.saveBtnText}>
-                        {uploadingFile ? "Uploading..." : "Create Routine"}
+                        {uploadingFile ? "Uploading..." : (editingId ? "Save Changes" : "Create Routine")}
                       </Text>
                     </>
                   )}
                 </TouchableOpacity>
-              </View>
-            </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
           </View>
         </View>
       </Modal>

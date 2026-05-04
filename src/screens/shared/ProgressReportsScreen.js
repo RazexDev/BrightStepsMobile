@@ -193,13 +193,17 @@ export default function ProgressReportsScreen() {
   const [showFilePickerModal, setShowFilePickerModal] = useState(false);
 
   // --- Parent Specific Data ---
-  const childName = user?.studentName || 'Yuhi'; // Based on screenshot fallback
+  const childName = user?.studentName || user?.name || 'Student'; 
   
   const parentReports = useMemo(() => {
     if (isTeacher) return [];
-    const filtered = allReports.filter(r => r.studentName === childName || r.studentName?.includes(childName));
-    return filtered.length > 0 ? filtered : allReports.slice(0, 2); // Default to latest 2 for UI demo if no exact match
-  }, [allReports, isTeacher, childName]);
+    const userId = user?._id || user?.id;
+    return allReports.filter(r => 
+      r.studentName === childName || 
+      r.studentName?.includes(childName) ||
+      (userId && (r.studentId === userId || r.childId === userId))
+    );
+  }, [allReports, isTeacher, childName, user]);
 
   const parentSummary = useMemo(() => {
     if (isTeacher) return null;
@@ -1055,10 +1059,17 @@ export default function ProgressReportsScreen() {
                                 new Date(r.date||r.createdAt).toLocaleDateString(undefined,{month:'short',day:'numeric'})
                               ).reverse(),
                               datasets: [
-                                { data: parentReports.slice(0,6).map(r => Number(r.sessionDuration)||Number(r.durationMinutes)||0).reverse(), color: () => '#2FB7A4' },
+                                { data: parentReports.slice(0,6).map(r => {
+                                  let mins = Number(r.sessionDuration) || Number(r.durationMinutes) || 0;
+                                  if (!mins && Number(r.completionTime)) mins = Math.max(1, Math.round(Number(r.completionTime)/60));
+                                  return mins;
+                                }).reverse(), color: () => '#2FB7A4' },
                                 { data: parentReports.slice(0,6).map(r => {
                                   const ps = {'Excellent':3,'Good':2,'Average':1,'Needs Improvement':0,'Developing':1,'Needs Support':0};
-                                  return Number(r.stars) > 0 ? Number(r.stars) * 10 : (ps[r.progressLevel]||0) * 10;
+                                  let stars = Number(r.stars) || 0;
+                                  let val = stars > 0 ? stars * 10 : (ps[r.progressLevel]||0) * 10;
+                                  // Ensure we don't return NaN
+                                  return isNaN(val) ? 0 : val;
                                 }).reverse(), color: () => '#F59E0B' }
                               ]
                             }}
@@ -1150,7 +1161,7 @@ export default function ProgressReportsScreen() {
                         const progColor = psMap[r.progressLevel] || '#6366F1';
                         const starPsMap = {'Excellent':3,'Good':2,'Average':1,'Needs Improvement':0,'Developing':1,'Needs Support':0};
                         const starsVal = Number(r.stars) > 0 ? Number(r.stars) : (starPsMap[r.progressLevel] || 0);
-                        const sessionMins = Number(r.sessionDuration)||Number(r.durationMinutes)||0;
+                        const sessionMins = Number(r.sessionDuration) || Number(r.durationMinutes) || (Number(r.completionTime) ? Math.round(Number(r.completionTime)/60) : 0);
                         const timeStr = sessionMins >= 60
                           ? `${Math.floor(sessionMins/60)}h ${sessionMins%60}m`
                           : sessionMins > 0 ? `${sessionMins}m` : '—';
