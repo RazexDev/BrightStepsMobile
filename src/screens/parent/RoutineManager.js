@@ -661,9 +661,10 @@ export default function RoutineManager({ route }) {
                     </>
                   )}
                 </TouchableOpacity>
-              </ScrollView>
-            </KeyboardAvoidingView>
-          </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </View>
         </View>
       </Modal>
     </SafeAreaView>
